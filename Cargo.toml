@@ -1,0 +1,17 @@
+[package]
+name = "raybit"
+version = "0.1.0"
+edition = "2021"
+authors = ["Alexander Velez <alexandervelez7245@gmail.com>"]
+description = "brainfuck function call extension!"
+readme = "README.md"
+repository = "https://github.com/Alex-Velez/raybit"
+license = "MIT"
+keywords = ["brainfuck", "interpreter"]
+categories = ["language"]
+
+[dependencies]
+memchr = "2.7.4"
+raylib-ffi = "5.0.1"
+
+# start: 5-11-2024
