@@ -1,5 +1,5 @@
 use crate::error::BitBitError;
-use std::io::Write;
+use std::io::{self, Write};
 
 pub const BASE: usize = 256;
 #[cfg(target_pointer_width = "16")]
@@ -33,7 +33,7 @@ pub fn shift_left(pointer: &mut usize, amount: usize) -> Result<(), BitBitError>
 /// Output character at pointer
 #[inline]
 pub fn output(memory: &Vec<u8>, pointer: &usize, amount: usize) -> Result<(), BitBitError> {
-    // print ascii
+    // print ASCII character at the pointer position
     for _ in 0..amount {
         putch(memory[*pointer] as core::ffi::c_char);
     }
@@ -49,7 +49,7 @@ pub fn output(memory: &Vec<u8>, pointer: &usize, amount: usize) -> Result<(), Bi
 #[inline]
 pub fn input(memory: &mut Vec<u8>, pointer: &usize, amount: usize) {
     for _ in 0..amount {
-        // get 1 character input
+        // get 1 character input and store it in the memory at the pointer position
         (*memory)[*pointer] = getch() as u8;
     }
 }
@@ -84,22 +84,46 @@ pub fn decrement(cell: &mut u8, amount: usize) {
     }
 }
 
-// I/O for brainfuck
+// Cross-platform I/O for brainfuck
+#[cfg(target_os = "windows")]
 extern "C" {
     fn _getch() -> core::ffi::c_char;
     fn _putch(c_char: core::ffi::c_char) -> core::ffi::c_void;
 }
 
 // Read 1 byte input
+#[cfg(target_os = "windows")]
 #[inline]
 fn getch() -> core::ffi::c_char {
-    // SAFETY: trust C
+    // SAFETY: call Windows-specific `_getch`
     unsafe { _getch() }
 }
 
 // Write 1 byte output
+#[cfg(target_os = "windows")]
 #[inline]
 fn putch(c_char: core::ffi::c_char) -> core::ffi::c_void {
-    // SAFETY: trust C
+    // SAFETY: call Windows-specific `_putch`
     unsafe { _putch(c_char) }
+}
+
+// Alternative implementation for non-Windows platforms
+#[cfg(not(target_os = "windows"))]
+#[inline]
+fn getch() -> core::ffi::c_char {
+    use std::io::Read;
+    // Read a single byte from stdin
+    io::stdin()
+        .bytes()
+        .next()
+        .and_then(|result| result.ok())
+        .unwrap_or(0) as core::ffi::c_char
+}
+
+// Alternative implementation for non-Windows platforms
+#[cfg(not(target_os = "windows"))]
+#[inline]
+fn putch(c_char: core::ffi::c_char) {
+    print!("{}", c_char as u8 as char);
+    io::stdout().flush().unwrap();
 }
